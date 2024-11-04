@@ -25,7 +25,8 @@ from paddlenlp.transformers import AutoTokenizer
 from paddlenlp.datasets import load_dataset
 from paddlenlp.utils.tools import get_bool_ids_greater_than, get_span
 
-from relext.uie_model import UIE
+#from relext.uie_model import UIE
+from paddlenlp.transformers import UIE
 from relext.utils import MODEL_MAP, USER_DATA_DIR
 
 
@@ -39,7 +40,8 @@ class InferBackend:
             # paddle动态图模型需要导出为静态图模型，才能预测部署
             logger.info("Converting to the inference model cost a little time.")
             logger.info(f'Loading model from {model_dir}')
-            model = UIE.from_pretrained(model_dir)
+            #model = UIE.from_pretrained(model_dir)
+            model = UIE.from_pretrained("uie-base")
             model.eval()
 
             # Convert to static graph with specific input description
