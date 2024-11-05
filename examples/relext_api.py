@@ -23,6 +23,7 @@ sys.path.append('..')
 from relext import RelationExtraction
 from relext import InformationExtraction
 
+
 # 设置日志格式
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -200,9 +201,13 @@ if __name__ == "__main__":
 
     # 使用paddle的函数判断当前环境GPU的个数是否大于0，如果大于0的话，使用gpu，否则使用cpu
     device = 'cpu'
+
     if paddle.device.cuda.device_count() > 0:
         paddle.set_device('gpu')
         device = 'gpu'
+        logger.debug('GPUs available: {}'.format(paddle.device.cuda.device_count()))
+
+    logger.info(f'device = {device}')
 
     # 初始化 RelationExtraction
     relationExtraction = RelationExtraction()
@@ -211,8 +216,9 @@ if __name__ == "__main__":
     informationExtraction = InformationExtraction(device=device)
 
     workers = int(os.environ.get('RELEXT_WORKER_COUNT', 1))
-    print('本次使用的 workers : ', workers)
+    logger.info('本次使用的 workers : ', workers)
     port = int(os.environ.get('RELEXT_PORT', 38000))
-    print('本次使用的 port : ', port)
-    uvicorn.run(app, host='0.0.0.0', port=port, workers=workers, log_level="info")
+    logger.info('本次使用的 port : ', port)
+    #uvicorn.run(app, host='0.0.0.0', port=port, workers=workers, log_level="debug")
+    uvicorn.run(app, host='0.0.0.0', port=port, log_level="debug")
 
