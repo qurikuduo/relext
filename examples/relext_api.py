@@ -9,18 +9,22 @@
 import sys
 import os
 import uvicorn
+import logging
+import paddle
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, Union
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append('..')
 from relext import RelationExtraction
 from relext import InformationExtraction
-from relext import RelationExtraction
+
+# 设置日志格式
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 @asynccontextmanager
@@ -31,7 +35,7 @@ async def lifespan(app: FastAPI):  # collects GPU memory
     #     torch.cuda.ipc_collect()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="relext api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -193,24 +197,22 @@ async def relationExtract(request: RelationExtractRequest):
 
 
 if __name__ == "__main__":
+
+    # 使用paddle的函数判断当前环境GPU的个数是否大于0，如果大于0的话，使用gpu，否则使用cpu
+    device = 'cpu'
+    if paddle.device.cuda.device_count() > 0:
+        paddle.set_device('gpu')
+        device = 'gpu'
+
     # 初始化 RelationExtraction
     relationExtraction = RelationExtraction()
 
     # 初始化 InformationExtraction
-    informationExtraction = InformationExtraction()
+    informationExtraction = InformationExtraction(device=device)
 
-    # 初始化 RelationExtraction
-    #relationExtraction = RelationExtraction()
+    workers = int(os.environ.get('RELEXT_WORKER_COUNT', 1))
+    print('本次使用的 workers : ', workers)
+    port = int(os.environ.get('RELEXT_PORT', 38000))
+    print('本次使用的 port : ', port)
+    uvicorn.run(app, host='0.0.0.0', port=port, workers=workers, log_level="info")
 
-    #tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, trust_remote_code=True)
-    #if 'cuda' in DEVICE:  # AMD, NVIDIA GPU can use Half Precision
-    #model = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True).to(DEVICE).eval()
-    # Multi-GPU support, use the following two lines instead of the above line, num gpus to your actual number of graphics cards
-    #from utils import load_model_on_gpus
-    #_my_gpu_count = torch.cuda.device_count()
-    #print(f"GPU count: {_my_gpu_count}")
-    #model = load_model_on_gpus(MODEL_PATH, num_gpus=_my_gpu_count)
-
-    #else:  # CPU, Intel GPU and other GPU can use Float16 Precision Only
-    #    model = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True).float().to(DEVICE).eval()
-    uvicorn.run(app, host='0.0.0.0', port=38000, workers=1)
