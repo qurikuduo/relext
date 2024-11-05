@@ -4,3 +4,6 @@ tabulate
 importlib_metadata
 nltk
 paddlenlp
+fastapi>=0.104.1
+uvicorn
+pydantic>=2.5.1
