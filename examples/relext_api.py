@@ -20,6 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append('..')
 from relext import RelationExtraction
 from relext import InformationExtraction
+from relext import RelationExtraction
 
 
 @asynccontextmanager
@@ -63,6 +64,18 @@ class InformationExtractResponse(BaseModel):
     result: list
     sch: list
     art: list
+
+
+class RelationExtractRequest(BaseModel):
+    art: str
+
+
+class RelationExtractResponse(BaseModel):
+    code: int
+    message: str
+    result: dict
+    art: str
+
 
 
 # 实现 article_triples_extract_demo.py 中功能的 web api 接口
@@ -143,6 +156,41 @@ async def informationExtract(request: InformationExtractRequest):
 
     return response
 
+# 实现 relation_extract_demo.py 中功能的 web api 接口
+@app.post("/v1/RelationExtract", response_model=RelationExtractResponse)
+async def relationExtract(request: RelationExtractRequest):
+    if len(request.art) < 1:
+        raise HTTPException(status_code=400, detail="Invalid request")
+
+    gen_params = dict(
+        art=request.art
+    )
+
+    logger.debug(f"==== request ====\n{gen_params}")
+
+    # 增加异常捕获，捕获到异常后，打印异常，并将 code 设置为 500，message 为异常的堆栈信息
+    try:
+        triples = relationExtraction.extract(request.art)
+        logger.debug(f"==== triples ====\n{triples}")
+        # 定义 ArticleTriplesExtractResponse 的 resul 的类型为 triples 的类型
+        response = RelationExtractResponse(
+            code=200,
+            message="success",
+            result=triples,
+            art=request.art
+        )
+
+    except Exception as e:
+        response = RelationExtractResponse(
+            code=500,
+            message=str(e),
+            result={},
+            art=request.art
+        )
+
+    return response
+
+
 
 if __name__ == "__main__":
     # 初始化 RelationExtraction
@@ -150,6 +198,9 @@ if __name__ == "__main__":
 
     # 初始化 InformationExtraction
     informationExtraction = InformationExtraction()
+
+    # 初始化 RelationExtraction
+    #relationExtraction = RelationExtraction()
 
     #tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, trust_remote_code=True)
     #if 'cuda' in DEVICE:  # AMD, NVIDIA GPU can use Half Precision
