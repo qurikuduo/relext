@@ -118,17 +118,57 @@ RelExt: Text Relation Extraction toolkit. 文本关系抽取工具。
 安装：
 
 ```
-pip install paddlepaddle-gpu # pip install paddlepaddle  for cpu
-pip install relext
+# pip install paddlepaddle-gpu # pip install paddlepaddle  for cpu
+# pip install relext
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+pip config set install.trusted-host mirrors.aliyun.com
+pip install -r requirements.txt
+cd examples/
 ```
 
 or
 
 ```
-pip install paddlepaddle-gpu # pip install paddlepaddle  for cpu
-git clone https://github.com/shibing624/relext.git
+# pip install paddlepaddle-gpu # pip install paddlepaddle  for cpu
+git clone https://github.com/当前项目的url/relext.git
 cd relext
-pip install --no-deps .
+# 无需执行下面这行
+# pip install --no-deps .
+# 直接执行 python examples/relation_extract_demo.py 即可
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+pip config set install.trusted-host mirrors.aliyun.com
+pip install -r requirements.txt
+cd /home/relext-src/examples && python article_triples_extract_demo.py && python information_extract_demo.py && python relation_extract_demo.py 
+```
+
+# 製作鏡像步驟：
+```
+docker run --gpus all --name relext-xx-img --network=host -it registry.baidubce.com/paddlepaddle/paddle:3.0.0b1-gpu-cuda12.3-cudnn9.0-trt8.6 /bin/bash
+exit
+# 在宿主机上操作：
+docker cp relext-src relext-xx-img:/home
+# 在容器上操作：
+docker exec -it relext-xx-img /bin/bash
+cd /home/relext-src/
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+pip config set install.trusted-host mirrors.aliyun.com
+
+pip install -r requirements.txt
+cd examples/
+
+python article_triples_extract_demo.py 
+python information_extract_demo.py 
+python relation_extract_demo.py 
+
+exit
+```
+# commit 镜像
+```
+docker commit -a xx -m "Init images of relext in offline model. All examples are OK. Model train was not tested. useage: cd /home/relext-src/examples && python article_triples_extract_demo.py && python information_extract_demo.py && python relation_extract_demo.py " relext-xx-img relext:xx-cu12
+```
+# 测试镜像
+```
+docker run --gpus all --rm --name relext-xx-img-test  --network=host -it relext:xx-cu12 /bin/bash
 ```
 
 # Usage
